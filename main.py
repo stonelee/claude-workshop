@@ -1,4 +1,5 @@
 import docker
+from docker.errors import ContainerError
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
@@ -51,9 +52,15 @@ async def run_claude_task(request: TaskRequest):
 
     try:
         # 启动容器执行任务
+        # 注意：CDockerfile 中如果设置了 ENTRYPOINT ["claude"], 这里的 command 就是参数
+        # 开启 tty=True 以捕获伪终端输出，且 Claude Code 需要交互式环境检测
+        # 注意：Claude Code 的 prompt 通常是位置参数，这里假设 entrypoint 是 claude 程序
+        # command=f'--dangerously-skip-permissions "{request.prompt}"', 
+        # 为了更健壮，我们把 prompt 当作参数传递
+        
         container_output = client.containers.run(
             image="claude-executor",
-            command=f'--dangerously-skip-permissions -p "{request.prompt}"',
+            command=f'"{request.prompt}" --dangerously-skip-permissions -p',
             volumes={base_path: {'bind': '/app', 'mode': 'rw'}},
             environment=env_vars,
             working_dir="/app",
@@ -61,11 +68,29 @@ async def run_claude_task(request: TaskRequest):
             stdout=True,
             stderr=True,
             remove=True,
-            user=f"{os.getuid()}:{os.getgid()}" # 以当前用户身份运行，避免产生 root 权限文件
+            tty=True, # 关键：开启 TTY
+            user=f"{os.getuid()}:{os.getgid()}" # 以当前用户身份运行
         )
         
-        return {"status": "success", "log": container_output.decode('utf-8')}
+        return {"status": "success", "log": container_output.decode('utf-8', errors='replace')}
     
+    except ContainerError as e:
+        # 捕获容器退出非0的情况，提取 stderr/stdout
+        # e.stderr 可能是 bytes
+        error_msg = e.stderr.decode('utf-8', errors='replace') if e.stderr else ""
+        if not error_msg and e.container:
+             # 有时候 output 在 stdout 里
+             try:
+                 error_msg = client.containers.get(e.container.id).logs().decode('utf-8', errors='replace')
+             except:
+                 pass
+        
+        # 如果以上都没获取到，尝试 e.args
+        if not error_msg:
+             error_msg = str(e)
+
+        return {"status": "error", "log": f"Container Exit Error: {error_msg}"}
+
     except Exception as e:
         return {"status": "error", "log": str(e)}
 
