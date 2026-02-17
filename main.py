@@ -44,36 +44,62 @@ async def run_claude_task(request: TaskRequest):
         "OPENROUTER_API_KEY": os.getenv("OPENROUTER_API_KEY"),
         "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
         "ANTHROPIC_AUTH_TOKEN": os.getenv("OPENROUTER_API_KEY"),
-        "ANTHROPIC_API_KEY": "" # 必须为空以启用 OpenRouter 路由
+        "ANTHROPIC_API_KEY": "", # 必须为空以启用 OpenRouter 路由
+        "HOME": "/tmp" # 容器内非 root 用户没有 home 目录，设置为 /tmp 避免 Claude Code 静默失败
     }
 
     if not env_vars["OPENROUTER_API_KEY"]:
         raise HTTPException(status_code=500, detail="Missing OPENROUTER_API_KEY in environment")
 
     try:
-        # 启动容器执行任务
-        # 注意：CDockerfile 中如果设置了 ENTRYPOINT ["claude"], 这里的 command 就是参数
-        # 开启 tty=True 以捕获伪终端输出，且 Claude Code 需要交互式环境检测
-        # 注意：Claude Code 的 prompt 通常是位置参数，这里假设 entrypoint 是 claude 程序
-        # command=f'--dangerously-skip-permissions "{request.prompt}"', 
-        # 为了更健壮，我们把 prompt 当作参数传递
+        # 启动容器执行任务：使用分离模式以便流式读取日志
+        print(f"Starting container for project: {request.project_name}")
         
-        container_output = client.containers.run(
+        # 1. 启动容器 (detach=True)
+        container = client.containers.run(
             image="claude-executor",
-            command=f'"{request.prompt}" --dangerously-skip-permissions -p',
+            # 使用列表格式传递命令参数，避免 shell 解析问题
+            command=["-p", "--dangerously-skip-permissions", request.prompt],
             volumes={base_path: {'bind': '/app', 'mode': 'rw'}},
             environment=env_vars,
             working_dir="/app",
-            detach=False,
+            detach=True,
+            tty=False, # 关闭 TTY，避免缓冲问题
+            user=f"{os.getuid()}:{os.getgid()}", # 以当前用户身份运行
+            # 不使用缓冲
             stdout=True,
-            stderr=True,
-            remove=True,
-            tty=True, # 关键：开启 TTY
-            user=f"{os.getuid()}:{os.getgid()}" # 以当前用户身份运行
+            stderr=True
         )
-        
-        return {"status": "success", "log": container_output.decode('utf-8', errors='replace')}
-    
+
+        # 2. 等待容器完成
+        print(f"Container {container.id[:12]} started. Waiting for completion...")
+        try:
+            result = container.wait()
+            exit_code = result.get('StatusCode', 0)
+
+            # 3. 获取完整日志（stdout + stderr）
+            final_log = container.logs(stdout=True, stderr=True).decode('utf-8', errors='replace')
+            print(final_log)  # 打印到服务器控制台
+            print(f"\nContainer finished with exit code: {exit_code}")
+
+            if exit_code != 0:
+                 print(f"\nContainer finished with error code: {exit_code}")
+                 return {
+                     "status": "error",
+                     "log": final_log,
+                     "exit_code": exit_code
+                 }
+
+            print("\nContainer finished successfully")
+            return {"status": "success", "log": final_log}
+
+        finally:
+            # 确保容器被清理
+            try:
+                container.remove()
+            except:
+                pass
+
     except ContainerError as e:
         # 捕获容器退出非0的情况，提取 stderr/stdout
         # e.stderr 可能是 bytes
