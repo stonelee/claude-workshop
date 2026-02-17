@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code 自动化站</title>
+    <style>
+        :root { --primary-color: #5856d6; --bg-color: #f5f5f7; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-color); color: #333; max-width: 900px; margin: 40px auto; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h1 { font-size: 1.5rem; margin-top: 0; display: flex; align-items: center; gap: 10px; }
+        .input-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
+        input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        textarea { height: 120px; resize: vertical; font-family: inherit; }
+        button { background: var(--primary-color); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; width: 100%; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        #log-container { margin-top: 25px; background: #1c1c1e; border-radius: 8px; padding: 15px; position: relative; }
+        #log { color: #00ff66; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 13px; white-space: pre-wrap; height: 400px; overflow-y: auto; margin: 0; }
+        .status-tag { position: absolute; top: 10px; right: 15px; font-size: 11px; color: #888; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>🤖 Claude Code 自动化站</h1>
+    
+    <div class="input-group">
+        <label>项目名称 (将创建在 ~/projects/ 目录下)</label>
+        <input type="text" id="projectName" placeholder="例如: my-quant-app" value="test-project">
+    </div>
+
+    <div class="input-group">
+        <label>需求描述</label>
+        <textarea id="prompt" placeholder="例如：帮我用 Python 写一个简单的布林带策略，输出到 strategy.py"></textarea>
+    </div>
+
+    <button id="runBtn" onclick="runTask()">启动 AI 编程容器</button>
+
+    <div id="log-container">
+        <div class="status-tag" id="status">等待中...</div>
+        <pre id="log">容器输出将显示在这里...</pre>
+    </div>
+</div>
+
+<script>
+    async function runTask() {
+        const runBtn = document.getElementById('runBtn');
+        const logDiv = document.getElementById('log');
+        const statusTag = document.getElementById('status');
+        const projectName = document.getElementById('projectName').value;
+        const prompt = document.getElementById('prompt').value;
+
+        if (!projectName || !prompt) {
+            alert("请填入项目名和需求");
+            return;
+        }
+
+        // UI 状态更新
+        runBtn.disabled = true;
+        runBtn.innerText = "执行中，请不要刷新页面...";
+        logDiv.innerText = "正在创建 Docker 容器并连接 OpenRouter...\n这可能需要 30-60 秒，取决于任务复杂度。";
+        statusTag.innerText = "RUNNING";
+
+        try {
+            const response = await fetch('/run-claude', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    project_name: projectName,
+                    prompt: prompt
+                })
+            });
+            const data = await response.json();
+            
+            logDiv.innerText = data.log || "执行完成，但没有返回日志。";
+            statusTag.innerText = data.status === "success" ? "COMPLETED" : "ERROR";
+        } catch (err) {
+            logDiv.innerText = "发生错误: " + err.message;
+            statusTag.innerText = "FAILED";
+        } finally {
+            runBtn.disabled = false;
+            runBtn.innerText = "开始执行";
+        }
+    }
+</script>
+
+</body>
+</html>
