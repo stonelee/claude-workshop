@@ -110,6 +110,11 @@ python main.py
 - `openai/gpt-4-turbo` - GPT-4 Turbo
 - `openai/gpt-4o` - GPT-4o (多模态)
 
+### 🇨🇳 国产大模型
+- `deepseek/deepseek-chat` - DeepSeek Chat (深度求索)
+- `qwen/qwen-2.5-72b-instruct` - 通义千问 Qwen 2.5 72B
+- `01-ai/yi-large` - 零一万物 Yi Large
+
 ### ⚡ 高性能
 - `anthropic/claude-3-opus` - Claude 3 Opus
 - `google/gemini-pro-1.5` - Gemini Pro 1.5
