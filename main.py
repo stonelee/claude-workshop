@@ -50,12 +50,19 @@ async def run_claude_task(request: TaskRequest):
         os.makedirs(base_path, exist_ok=True)
 
     # 环境变量配置 (从宿主机获取，保持安全性)
+    # 配置固定模型为 minimax/minimax-m2.5
+    configured_model = "minimax/minimax-m2.5"
+    
     env_vars = {
         "OPENROUTER_API_KEY": os.getenv("OPENROUTER_API_KEY"),
         "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
         "ANTHROPIC_AUTH_TOKEN": os.getenv("OPENROUTER_API_KEY"),
         "ANTHROPIC_API_KEY": "", # 必须为空以启用 OpenRouter 路由
-        "ANTHROPIC_MODEL": request.model, # 通过环境变量指定 OpenRouter 模型，避免 CLI --model 只接受 Claude 别名
+        "ANTHROPIC_MODEL": configured_model,
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": configured_model,
+        "ANTHROPIC_DEFAULT_OPUS_MODEL": configured_model,
+        "ANTHROPIC_DEFAULT_SONNET_MODEL": configured_model,
+        "ANTHROPIC_REASONING_MODEL": configured_model,
         "HOME": "/tmp" # 容器内非 root 用户没有 home 目录，设置为 /tmp 避免 Claude Code 静默失败
     }
 
