@@ -55,6 +55,7 @@ async def run_claude_task(request: TaskRequest):
         "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
         "ANTHROPIC_AUTH_TOKEN": os.getenv("OPENROUTER_API_KEY"),
         "ANTHROPIC_API_KEY": "", # 必须为空以启用 OpenRouter 路由
+        "ANTHROPIC_MODEL": request.model, # 通过环境变量指定 OpenRouter 模型，避免 CLI --model 只接受 Claude 别名
         "HOME": "/tmp" # 容器内非 root 用户没有 home 目录，设置为 /tmp 避免 Claude Code 静默失败
     }
 
@@ -69,7 +70,7 @@ async def run_claude_task(request: TaskRequest):
         container = client.containers.run(
             image="claude-executor",
             # 使用列表格式传递命令参数，避免 shell 解析问题
-            command=["-p", "--dangerously-skip-permissions", "--model", request.model, request.prompt],
+            command=["-p", "--dangerously-skip-permissions", request.prompt],
             volumes={base_path: {'bind': '/app', 'mode': 'rw'}},
             environment=env_vars,
             working_dir="/app",
