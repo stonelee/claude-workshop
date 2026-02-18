@@ -3,7 +3,7 @@ name: Deploy to Server
 on:
   push:
     branches:
-      - master # 当 push 或 PR 合并到 master 时触发
+      - main # 当 push 或 PR 合并到 main 时触发
 
 jobs:
   deploy:
