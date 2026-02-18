@@ -11,7 +11,9 @@
         h1 { font-size: 1.5rem; margin-top: 0; display: flex; align-items: center; gap: 10px; }
         .input-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; }
-        input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        input, textarea, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        select { cursor: pointer; background-color: white; }
+        optgroup { font-weight: bold; }
         textarea { height: 120px; resize: vertical; font-family: inherit; }
         button { background: var(--primary-color); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; width: 100%; }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -36,11 +38,23 @@
     </div>
 
     <div class="input-group">
-        <label>选择大模型</label>
+        <label>选择大模型 (OpenRouter 热门模型)</label>
         <select id="modelSelect">
-            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (New)</option>
-            <option value="claude-3-opus-20240229">Claude 3 Opus</option>
-            <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+            <optgroup label="🔥 最热门">
+                <option value="anthropic/claude-3.5-sonnet" selected>Claude 3.5 Sonnet (推荐)</option>
+                <option value="openai/gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="openai/gpt-4o">GPT-4o (多模态)</option>
+            </optgroup>
+            <optgroup label="⚡ 高性能">
+                <option value="anthropic/claude-3-opus">Claude 3 Opus</option>
+                <option value="google/gemini-pro-1.5">Gemini Pro 1.5</option>
+                <option value="mistralai/mistral-large">Mistral Large</option>
+            </optgroup>
+            <optgroup label="💰 高性价比">
+                <option value="anthropic/claude-3.5-haiku">Claude 3.5 Haiku</option>
+                <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="google/gemini-flash-1.5">Gemini Flash 1.5</option>
+            </optgroup>
         </select>
     </div>
 
