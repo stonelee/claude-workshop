@@ -99,3 +99,31 @@ python main.py
 | HOME=/tmp | 非 root 用户在容器内无 home 目录，需设置 `HOME=/tmp` 否则 Claude Code 会静默失败 |
 | -p 模式 | 使用 `claude -p` 非交互模式执行，单次输出后退出 |
 | OpenRouter 代理 | 通过设置 `ANTHROPIC_BASE_URL` 和 `ANTHROPIC_AUTH_TOKEN` 走 OpenRouter 转发请求 |
+| 模型格式 | 使用 OpenRouter 模型 ID 格式（如 `anthropic/claude-3.5-sonnet:beta`）。支持多种 AI 提供商的模型 |
+
+## 支持的模型
+
+界面提供以下热门 OpenRouter 模型供选择：
+
+### 🔥 最热门
+- `anthropic/claude-3.5-sonnet:beta` - Claude 3.5 Sonnet (推荐)
+- `openai/gpt-4-turbo` - GPT-4 Turbo
+- `openai/gpt-4o` - GPT-4o (多模态)
+
+### 🇨🇳 国产大模型
+- `minimax/minimax-01` - MiniMax M2.5 (海螺)
+- `openai/kimi-k2.5` - Kimi K2.5 (月之暗面)
+- `zhipuai/glm-5-plus` - GLM 5 Plus (智谱清言)
+- `deepseek/deepseek-chat` - DeepSeek Chat (深度求索)
+- `qwen/qwen-2.5-72b-instruct` - 通义千问 Qwen 2.5 72B
+- `01-ai/yi-large` - 零一万物 Yi Large
+
+### ⚡ 高性能
+- `anthropic/claude-3-opus` - Claude 3 Opus
+- `google/gemini-pro-1.5` - Gemini Pro 1.5
+- `mistralai/mistral-large` - Mistral Large
+
+### 💰 高性价比
+- `anthropic/claude-3.5-haiku` - Claude 3.5 Haiku
+- `openai/gpt-3.5-turbo` - GPT-3.5 Turbo
+- `google/gemini-flash-1.5` - Gemini Flash 1.5
