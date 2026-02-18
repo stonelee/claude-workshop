@@ -31,6 +31,7 @@ client = docker.from_env()
 class TaskRequest(BaseModel):
     project_name: str
     prompt: str
+    model: str
 
 # 1. 根路由：返回前端页面
 @app.get("/")
@@ -68,7 +69,7 @@ async def run_claude_task(request: TaskRequest):
         container = client.containers.run(
             image="claude-executor",
             # 使用列表格式传递命令参数，避免 shell 解析问题
-            command=["-p", "--dangerously-skip-permissions", request.prompt],
+            command=["-p", "--dangerously-skip-permissions", "--model", request.model, request.prompt],
             volumes={base_path: {'bind': '/app', 'mode': 'rw'}},
             environment=env_vars,
             working_dir="/app",

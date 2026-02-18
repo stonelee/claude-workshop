@@ -35,6 +35,15 @@
         <textarea id="prompt" placeholder="例如：帮我用 Python 写一个简单的布林带策略，输出到 strategy.py"></textarea>
     </div>
 
+    <div class="input-group">
+        <label>选择大模型</label>
+        <select id="modelSelect">
+            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (New)</option>
+            <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+            <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+        </select>
+    </div>
+
     <button id="runBtn" onclick="runTask()">启动 AI 编程容器</button>
 
     <div id="log-container">
@@ -50,6 +59,7 @@
         const statusTag = document.getElementById('status');
         const projectName = document.getElementById('projectName').value;
         const prompt = document.getElementById('prompt').value;
+        const model = document.getElementById('modelSelect').value;
 
         if (!projectName || !prompt) {
             alert("请填入项目名和需求");
@@ -59,7 +69,7 @@
         // UI 状态更新
         runBtn.disabled = true;
         runBtn.innerText = "执行中，请不要刷新页面...";
-        logDiv.innerText = "正在创建 Docker 容器并连接 OpenRouter...\n这可能需要 30-60 秒，取决于任务复杂度。";
+        logDiv.innerText = "正在创建 Docker 容器并连接 OpenRouter (" + model + ")...\n这可能需要 30-60 秒，取决于任务复杂度。";
         statusTag.innerText = "RUNNING";
 
         try {
@@ -68,7 +78,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     project_name: projectName,
-                    prompt: prompt
+                    prompt: prompt,
+                    model: model
                 })
             });
             const data = await response.json();
